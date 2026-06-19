@@ -5,7 +5,7 @@ ChekReg is built as a highly robust, zero-trust footprint analysis engine. It le
 ## High-Level Data Flow
 
 1. **IMAP Telemetry Extraction**: Connects directly to the user's IMAP server using Python's native `imaplib`.
-2. **Payload Parsing**: Evaluates standard and custom header implementations (`List-Unsubscribe`, `Authentication-Results`).
+2. **Payload Parsing**: Evaluates standard headers (`From`, `Date`, `List-Unsubscribe`).
 3. **Database Resolution**: Cross-references parsed domains against the `data/sites.json` database.
 4. **Scoring Engine**: Evaluates metadata (last active date, breach status) to generate a Safety Score.
 5. **UI Streaming**: Emits parsed, filtered JSON blobs over WebSockets directly to the frontend.
@@ -34,9 +34,9 @@ Every unique extracted domain is mapped against our `sites.json` database. The d
 
 The application avoids heavy, bloated cloud frameworks by running an ephemeral, lightweight `Flask` server strictly on `localhost:5000`. 
 
-**WebSockets**: The server utilizes `flask_sock` to stream live progress telemetry. During the engine scan, it emits:
-1.  `status` frames: `{"type": "status", "current": 200, "total": 5000}`
-2.  `complete` frames: Drops the final processed footprint payload for the UI to consume and render.
+**Client Polling**: The server utilizes lightweight endpoints (`/api/status`) to provide live progress telemetry. During the engine scan, the frontend periodically polls to get:
+1.  `status` frames: `{"status": "scanning", "progress": 30}`
+2.  `complete` payload: Drops the final processed footprint payload for the UI to consume and render via `/api/results`.
 
 ---
 

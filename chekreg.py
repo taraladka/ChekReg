@@ -3,7 +3,7 @@
 chekreg — Digital Footprint Mapper
 """
 
-import os, sys, argparse
+import os, sys, argparse, subprocess, re
 
 try:
     from colorama import Fore, Style, init
@@ -96,7 +96,8 @@ def _developer_menu(report: Report):
             
         elif choice == 1:
             print(f"  {BR}Running fetch_missing_links.py...{RS}\n")
-            os.system('python scripts/fetch_missing_links.py' if os.name != 'nt' else 'python scripts\\fetch_missing_links.py')
+            script_path = os.path.join('scripts', 'fetch_missing_links.py')
+            subprocess.run([sys.executable, script_path])
             input(f"\n  {D}Press Enter to continue...{RS}")
             
         elif choice == 2:
@@ -104,7 +105,7 @@ def _developer_menu(report: Report):
             if custom_path and os.path.exists(custom_path):
                 print(f"  {BR}Running merge_db.py on {custom_path}...{RS}\n")
                 script_path = os.path.join('scripts', 'merge_db.py')
-                os.system(f'python "{script_path}" "{custom_path}"')
+                subprocess.run([sys.executable, script_path, custom_path])
             else:
                 print(f"  {Y}File not found or invalid path.{RS}")
             input(f"\n  {D}Press Enter to continue...{RS}")
@@ -166,11 +167,12 @@ def _post_scan_loop(report: Report):
 def run_cli_interactive():
     # ── email address ──
     email = ""
+    email_regex = re.compile(r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$")
     while not email:
         email = _menu_input("Your Email address →")
         if not email:
             print(f"  {R}Email is required.{RS}")
-        elif "@" not in email:
+        elif not email_regex.match(email):
             print(f"  {R}That doesn't look like a valid email.{RS}")
             email = ""
 

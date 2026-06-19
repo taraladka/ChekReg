@@ -27,5 +27,5 @@ ChekReg respects the sanctity of your inbox.
 
 If you choose to enable the Breach Check feature, the engine will make outgoing HTTPS requests to the `haveibeenpwned.com` API.
 - Only the specific domains found in your footprint are sent to the API to check for breaches.
-- Your email address itself is never sent to any third party (the HIBP API checks breaches by domain, or if checking your specific account, it uses the official HIBP `/breachedaccount` endpoint securely).
+- Your full email address is transmitted securely over HTTPS to the official HIBP `/breachedaccount` endpoint to retrieve matching breach domains. No other personal data is sent.
 - This feature can be completely bypassed by not checking the HIBP toggle, allowing for a 100% offline database resolution using the local `sites.json`.

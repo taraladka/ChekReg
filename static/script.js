@@ -199,6 +199,29 @@ document.addEventListener('DOMContentLoaded', () => {
             <button class="filter-pill" data-filter="ghost" style="border-color: rgba(250,173,20,0.3); color: var(--warning);">Ghost Accounts (${countGhost})</button>
             <button class="filter-pill" data-filter="breached" style="border-color: rgba(255,77,79,0.3); color: var(--danger);">Breached (${countBreach})</button>
         `;
+        // XSS Prevention: Escape HTML entities
+        const escapeHTML = (str) => {
+            if (!str) return '';
+            return String(str).replace(/[&<>'"]/g, 
+                tag => ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    "'": '&#39;',
+                    '"': '&quot;'
+                }[tag] || tag)
+            );
+        };
+
+        // XSS Prevention: Validate URLs to prevent javascript: execution
+        const safeUrl = (url) => {
+            if (!url) return '#';
+            const lower = String(url).toLowerCase().trim();
+            if (lower.startsWith('http://') || lower.startsWith('https://')) {
+                return escapeHTML(url);
+            }
+            return '#';
+        };
 
         let html = '';
         orgs.forEach(o => {
@@ -216,10 +239,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             let actionsHtml = '';
             if (o.delete_url) {
-                actionsHtml += `<a href="${o.delete_url}" target="_blank" class="btn btn-danger"><i class="fa-solid fa-trash"></i> Request Deletion</a>`;
+                actionsHtml += `<a href="${safeUrl(o.delete_url)}" target="_blank" class="btn btn-danger"><i class="fa-solid fa-trash"></i> Request Deletion</a>`;
             }
             if (o.unsub_link) {
-                actionsHtml += `<a href="${o.unsub_link}" target="_blank" class="btn btn-secondary"><i class="fa-solid fa-ban"></i> Unsubscribe</a>`;
+                actionsHtml += `<a href="${safeUrl(o.unsub_link)}" target="_blank" class="btn btn-secondary"><i class="fa-solid fa-ban"></i> Unsubscribe</a>`;
             }
             
             // Add Feedback / Flag button to the top right corner
@@ -243,8 +266,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div>
                         <div class="card-top">
                             <div class="org-title">
-                                <h4>${o.name}</h4>
-                                <span class="org-domain">${o.domains[0] || ''}</span>
+                                <h4>${escapeHTML(o.name)}</h4>
+                                <span class="org-domain">${escapeHTML(o.domains[0] || '')}</span>
                             </div>
                             ${flagHtml}
                         </div>

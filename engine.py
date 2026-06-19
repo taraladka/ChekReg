@@ -12,8 +12,9 @@ Usage:
 import os, re, sys, json, urllib.request, urllib.error, urllib.parse
 from typing import Dict, List, Optional, Set
 from dataclasses import dataclass, field
-from collections import Counter
-from datetime import datetime
+from collections import Counter, defaultdict
+from datetime import datetime, timezone, timedelta
+from email.utils import parsedate_to_datetime
 
 import imaplib, email
 from email.header import decode_header
@@ -223,18 +224,15 @@ class OrgProfile:
 
     @property
     def is_inactive(self):
-        if not self.last_seen: return False
+        if not self.last_seen:
+            return False
         try:
-            from email.utils import parsedate_to_datetime
-            from datetime import datetime, timezone, timedelta
             dt = parsedate_to_datetime(self.last_seen)
             if dt.tzinfo is None:
                 dt = dt.replace(tzinfo=timezone.utc)
-            now = datetime.now(timezone.utc)
-            return (now - dt) > timedelta(days=180)
+            return (datetime.now(timezone.utc) - dt) > timedelta(days=180)
         except Exception:
-            current_year = str(datetime.now().year)
-            return current_year not in self.last_seen
+            return str(datetime.now().year) not in self.last_seen
 
     @property
     def primary_domain(self):
@@ -409,7 +407,7 @@ class Scanner:
 
             self.scanned += 1
         except Exception:
-            pass
+            pass  # Malformed or unparseable header — skip silently
 
     # ── imap scan ──
     def scan_imap(self, progress_cb=None):
@@ -526,12 +524,16 @@ class Report:
                                   key=lambda x: x.total_emails, reverse=True)
         self.newsletters = [o for o in self.all if o.unsub_links or o.categories['newsletter'] > 0 or o.final_category in ('newsletters', 'newsletter')]
 
-    def _score(self):
-        s = 100
-        s -= len(self.noisy)    * 2    # clutter
-        s -= len(self.inactive) * 3    # ghost accounts
-        s -= len(self.breached) * 10   # breaches are serious
-        return max(0, min(100, s))
+    def _score(self) -> int:
+        """Normalized 0-100 hygiene score, scaled by inbox size to avoid penalizing large inboxes."""
+        if not self.all:
+            return 100
+        total = len(self.all)
+        breach_rate   = len(self.breached)  / total
+        inactive_rate = len(self.inactive)  / total
+        noisy_rate    = len(self.noisy)     / total
+        s = 100 - (breach_rate * 50) - (inactive_rate * 30) - (noisy_rate * 20)
+        return max(0, min(100, round(s)))
 
     def _score_label(self, s):
         if s >= 80: return G + "Good"    + RS
@@ -747,7 +749,6 @@ class Report:
             a("")
 
         a(f"MASTER ACTION DASHBOARD ({len(self.all)} organizations)")
-        from collections import defaultdict
         grouped = defaultdict(list)
         for org in self.all:
             grouped[org.final_category].append(org)
