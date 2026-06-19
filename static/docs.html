@@ -75,6 +75,7 @@
             margin-top: 2.5rem;
             margin-bottom: 1.2rem;
             line-height: 1.3;
+            scroll-margin-top: 4rem; /* Fixes anchor jumps cutting off headings */
         }
         
         .docs-content h1 {
@@ -139,6 +140,52 @@
         .docs-content strong {
             color: #ffffff;
             font-weight: 600;
+        }
+
+        /* Copy Button Styles */
+        .code-wrapper {
+            position: relative;
+            margin-bottom: 1.8rem;
+        }
+        
+        .code-wrapper pre {
+            margin-bottom: 0; /* Let wrapper handle margin */
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 0.6rem;
+            right: 0.6rem;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            color: #888;
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-family: var(--font-mono);
+            cursor: pointer;
+            transition: all 0.2s;
+            opacity: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .code-wrapper:hover .copy-btn {
+            opacity: 1;
+        }
+
+        .copy-btn:hover {
+            background: #2a2a2a;
+            color: #fff;
+            border-color: #555;
+        }
+
+        .copy-btn.copied {
+            background: var(--green-soft);
+            color: var(--green);
+            border-color: var(--green);
+            opacity: 1;
         }
 
         .docs-section {
@@ -575,6 +622,33 @@ document.addEventListener("DOMContentLoaded", () => {
     
     headers.forEach(h => observer.observe(h));
     
+    // Add Copy buttons to all pre blocks
+    document.querySelectorAll('.docs-content pre').forEach(pre => {
+        // Wrap pre in a relative container
+        const wrapper = document.createElement('div');
+        wrapper.className = 'code-wrapper';
+        pre.parentNode.insertBefore(wrapper, pre);
+        wrapper.appendChild(pre);
+
+        // Create button
+        const btn = document.createElement('button');
+        btn.className = 'copy-btn';
+        btn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy';
+        wrapper.appendChild(btn);
+
+        btn.addEventListener('click', () => {
+            const codeText = pre.innerText.trim();
+            navigator.clipboard.writeText(codeText).then(() => {
+                btn.classList.add('copied');
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> Copied';
+                setTimeout(() => {
+                    btn.classList.remove('copied');
+                    btn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy';
+                }, 2000);
+            });
+        });
+    });
+
     // Smooth scroll interception
     sidebar.addEventListener('click', (e) => {
         const link = e.target.closest('a');
@@ -583,10 +657,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const targetId = link.getAttribute('href').substring(1);
             const targetEl = document.getElementById(targetId);
             if (targetEl) {
-                content.scrollTo({
-                    top: targetEl.offsetTop - 20,
-                    behavior: 'smooth'
-                });
+                targetEl.scrollIntoView({ behavior: 'smooth' });
                 history.pushState(null, null, '#' + targetId);
             }
         }
@@ -598,7 +669,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const tEl = document.getElementById(tId);
         if (tEl) {
             setTimeout(() => {
-                content.scrollTo({ top: tEl.offsetTop - 20, behavior: 'smooth' });
+                tEl.scrollIntoView({ behavior: 'smooth' });
             }, 100);
         }
     }
