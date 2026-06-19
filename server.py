@@ -8,9 +8,10 @@ from engine import Scanner, Report, VERSION
 
 app = Flask(__name__, static_folder='static', static_url_path='')
 
-# Global state to track scan progress
+state_lock = threading.Lock()
+
 scan_state = {
-    "status": "idle", # idle, auth_failed, scanning, done, error
+    "status": "idle",
     "progress": 0,
     "message": "",
     "report_data": None
@@ -39,41 +40,41 @@ def start_scan():
     scan_state["report_data"] = None
 
     def run_scan_thread():
-        global scan_state
-        
+        scanner = None
         def progress_cb(pct, msg):
-            scan_state["progress"] = pct
-            scan_state["message"] = msg
-            
+            with state_lock:
+                scan_state["progress"] = pct
+                scan_state["message"] = msg
+
         try:
             scanner = Scanner(email, quiet=True)
-            
-            # Auth
+
             if not scanner.authenticate(host, port, password):
-                scan_state["status"] = "auth_failed"
-                scan_state["message"] = "Authentication failed. Check your App Password."
+                with state_lock:
+                    scan_state["status"] = "auth_failed"
+                    scan_state["message"] = "Authentication failed. Check your App Password."
                 return
-                
-            scan_state["status"] = "scanning"
-            scan_state["progress"] = 30
-            scan_state["message"] = "Scanning emails..."
-            
-            # Scan
+
+            with state_lock:
+                scan_state["status"] = "scanning"
+                scan_state["progress"] = 30
+                scan_state["message"] = "Scanning emails..."
+
             scanner.scan_imap(progress_cb=progress_cb)
-            
-            scan_state["progress"] = 80
-            scan_state["message"] = "Checking for data breaches..."
-            
-            # HIBP
+
+            with state_lock:
+                scan_state["progress"] = 80
+                scan_state["message"] = "Checking for data breaches..."
+
             scanner.run_hibp(api_key=hibp_key)
-            
-            scan_state["progress"] = 90
-            scan_state["message"] = "Generating report..."
-            
+
+            with state_lock:
+                scan_state["progress"] = 90
+                scan_state["message"] = "Generating report..."
+
             report = Report(scanner.orgs, email, hibp_checked=bool(hibp_key))
-            
-            # Prepare JSON data for frontend
-            scan_state["report_data"] = {
+
+            result = {
                 'email': email,
                 'score': report._score(),
                 'summary': {
@@ -115,13 +116,20 @@ def start_scan():
                     for o in sorted(report.all, key=lambda x: x.name)
                 ]
             }
-            scan_state["status"] = "done"
-            scan_state["progress"] = 100
-            scan_state["message"] = "Scan Complete!"
-            
+
+            with state_lock:
+                scan_state["report_data"] = result
+                scan_state["status"] = "done"
+                scan_state["progress"] = 100
+                scan_state["message"] = "Scan Complete!"
+
         except Exception as e:
-            scan_state["status"] = "error"
-            scan_state["message"] = f"Error: {str(e)}"
+            with state_lock:
+                scan_state["status"] = "error"
+                scan_state["message"] = f"Error: {str(e)}"
+        finally:
+            if scanner:
+                scanner.close()
             
     threading.Thread(target=run_scan_thread, daemon=True).start()
     return jsonify({"success": True, "message": "Scan started"})
@@ -201,9 +209,8 @@ def export_missing():
     return jsonify({"count": len(missing), "path": path})
 
 
-# ── Auto-Resolve state ──
 resolve_state = {
-    "status": "idle",  # idle, running, done, error
+    "status": "idle",
     "log": [],
     "stats": {}
 }
@@ -238,10 +245,9 @@ def start_resolve():
                 resolve_state["stats"] = {"total": 0, "resolved": 0}
                 return
 
-            resolve_state["log"].append(f"[*] Processing {len(orgs)} organizations...")
+            with state_lock:
+                resolve_state["log"].append(f"[*] Processing {len(orgs)} organizations...")
 
-            # Load JDM database
-            resolve_state["log"].append("[*] Loading JustDeleteMe database...")
             jdm_map = {}
             try:
                 req = urllib.request.Request(
@@ -255,11 +261,12 @@ def start_resolve():
                         for dom in site.get('domains', []):
                             if dom and link:
                                 jdm_map[dom.lower()] = link
-                resolve_state["log"].append(f"[+] JustDeleteMe: {len(jdm_map)} domains loaded")
+                with state_lock:
+                    resolve_state["log"].append(f"[+] JustDeleteMe: {len(jdm_map)} domains loaded")
             except Exception as e:
-                resolve_state["log"].append(f"[!] JustDeleteMe failed: {e}")
+                with state_lock:
+                    resolve_state["log"].append(f"[!] JustDeleteMe failed: {e}")
 
-            # Well-known paths
             well_known = [
                 "/account/delete", "/settings/account", "/settings/delete",
                 "/account/deactivate", "/delete-account", "/close-account",
@@ -370,18 +377,20 @@ def start_resolve():
                     resolve_state["log"].append(f"[!] Merge failed: {e}")
 
             total_resolved = stats['db_hit'] + stats['probe_hit'] + stats['search_hit']
-            resolve_state["stats"] = {
-                "total": len(orgs), "resolved": total_resolved,
-                "db_hit": stats['db_hit'], "probe_hit": stats['probe_hit'],
-                "search_hit": stats['search_hit'], "offline": stats['offline'],
-                "not_found": stats['not_found']
-            }
-            resolve_state["log"].append(f"[+] Done! Resolved {total_resolved}/{len(orgs)} organizations.")
-            resolve_state["status"] = "done"
+            with state_lock:
+                resolve_state["stats"] = {
+                    "total": len(orgs), "resolved": total_resolved,
+                    "db_hit": stats['db_hit'], "probe_hit": stats['probe_hit'],
+                    "search_hit": stats['search_hit'], "offline": stats['offline'],
+                    "not_found": stats['not_found']
+                }
+                resolve_state["log"].append(f"[+] Done! Resolved {total_resolved}/{len(orgs)} organizations.")
+                resolve_state["status"] = "done"
 
         except Exception as e:
-            resolve_state["log"].append(f"[!] Fatal error: {e}")
-            resolve_state["status"] = "error"
+            with state_lock:
+                resolve_state["log"].append(f"[!] Fatal error: {e}")
+                resolve_state["status"] = "error"
 
     threading.Thread(target=run_resolver, daemon=True).start()
     return jsonify({"success": True})
