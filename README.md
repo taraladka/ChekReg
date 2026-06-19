@@ -26,13 +26,14 @@
 
 Most digital footprint tools require you to grant OAuth access to your inbox. While convenient, this exposes your private email metadata to a third-party server. 
 
-**ChekReg takes a different path.** It is a purely local script that connects directly to your email provider via IMAP, pulls only the necessary headers (`From`, `Date`, `List-Unsubscribe`), matches them against a local database, and destroys all credentials the moment the scan finishes.
+**ChekReg takes a different path.** It is a purely local script that connects directly to your email provider via IMAP, pulls only the necessary headers (`From`, `Date`, `List-Unsubscribe`), matches them against our **massive local database of thousands of web services**, and destroys all credentials the moment the scan finishes.
 
 **Zero Telemetry. Zero Cloud Processing. Zero Trust.**
 
 ## ✨ Features
 
-- **Local & Offline Resolution**: Your footprint is built locally against the bundled `sites.json` database.
+- **Massive Built-In Database**: Powered by `sites.json`—a continuously updated, community-driven database containing thousands of organizations and their direct account deletion endpoints.
+- **Local & Offline Resolution**: Your footprint is built locally against the bundled database, entirely offline.
 - **HaveIBeenPwned Integration**: (Optional) Flags your accounts that have been exposed in known public data breaches.
 - **Ghost Account Detection**: Flags accounts you haven't received emails from in over 6 months.
 - **Integrated Auto-Resolver**: A 4-stage engine that automatically crawls the web to find missing deletion URLs for obscure services.
@@ -88,7 +89,7 @@ It runs a powerful 4-stage pipeline:
 
 ## 🤝 Contributing
 
-We want to map the entire internet's account deletion URLs. Our community-driven database (`data/sites.json`) is the core of this project.
+We want to map the entire internet's account deletion URLs. Our massive community-driven database (`data/sites.json`) is the core of this project. It already contains thousands of services, but the web is always growing.
 
 If ChekReg's Auto-Resolver successfully finds links for obscure regional or niche services you use, **please consider contributing them back!** Every new verified link helps hundreds of other users cleanly erase their footprint.
 
