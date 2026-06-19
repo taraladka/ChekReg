@@ -1,0 +1,5 @@
+tldextract
+colorama
+flask
+duckduckgo-search
+requests

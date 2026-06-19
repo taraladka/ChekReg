@@ -191,19 +191,22 @@ def run_cli_interactive():
 
     print(f"\n  {BR}Ready to scan...{RS}\n")
     scanner = Scanner(email, quiet=False)
-    
+
     print(f"  {D}[1/3]{RS} Authenticating to {host}:{port}…")
     if not scanner.authenticate(host, port, password):
         sys.exit(1)
     print(f"  {G}✓{RS}  Authenticated\n")
 
-    print(f"  {D}[2/3]{RS} Scanning via IMAP…")
-    scanner.scan_imap()
-    print()
+    try:
+        print(f"  {D}[2/3]{RS} Scanning via IMAP…")
+        scanner.scan_imap()
+        print()
 
-    print(f"  {D}[3/3]{RS} Breach check…")
-    scanner.run_hibp(api_key=hibp_key)
-    print()
+        print(f"  {D}[3/3]{RS} Breach check…")
+        scanner.run_hibp(api_key=hibp_key)
+        print()
+    finally:
+        scanner.close()
 
     if not scanner.orgs:
         print(f"  {Y}No data found.{RS} Check your credentials and try again.\n")
