@@ -96,7 +96,7 @@ class TestOrgProfile(unittest.TestCase):
 class TestReportScore(unittest.TestCase):
     def test_empty_score(self):
         report = engine.Report({}, "test@example.com", hibp_checked=False)
-        self.assertEqual(report._score(), 100)
+        self.assertEqual(report.score(), 100)
         
     def test_mixed_score(self):
         # 1 perfect, 1 breached, 1 inactive, 1 noisy
@@ -114,7 +114,7 @@ class TestReportScore(unittest.TestCase):
         
         # Total = 4. Breached = 1 (25%). Inactive = 1 (25%). Noisy = 1 (25%).
         # Score = 100 - (0.25 * 50) - (0.25 * 30) - (0.25 * 20) = 100 - 12.5 - 7.5 - 5 = 75
-        self.assertEqual(report._score(), 75)
+        self.assertEqual(report.score(), 75)
 
 
 if __name__ == "__main__":

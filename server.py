@@ -76,7 +76,7 @@ def start_scan():
 
             result = {
                 'email': email,
-                'score': report._score(),
+                'score': report.score(),
                 'summary': {
                     'total_orgs': len(report.all),
                     'accounts': len(report.accounts),

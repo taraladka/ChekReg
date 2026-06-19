@@ -9,7 +9,7 @@ Usage:
     python chekreg.py --web    # Launch Web Dashboard directly
 """
 
-import os, re, sys, json, urllib.request, urllib.error, urllib.parse
+import os, re, sys, json, urllib.request, urllib.error, urllib.parse, logging
 from typing import Dict, List, Optional, Set
 from dataclasses import dataclass, field
 from collections import Counter, defaultdict
@@ -231,7 +231,8 @@ class OrgProfile:
             if dt.tzinfo is None:
                 dt = dt.replace(tzinfo=timezone.utc)
             return (datetime.now(timezone.utc) - dt) > timedelta(days=180)
-        except Exception:
+        except Exception as e:
+            logging.debug(f"is_inactive date parsing failed for '{self.last_seen}': {e}")
             return str(datetime.now().year) not in self.last_seen
 
     @property
@@ -306,8 +307,8 @@ def check_hibp(email: str, api_key: str = None) -> dict:
         elif e.code == 401:
             results['_api_key_required'] = True
         # 429 = rate limited, 503 = down — silently skip
-    except Exception:
-        pass              # network issue — not critical
+    except Exception as e:
+        logging.debug(f"HIBP network error: {e}")
     return results
 
 # ── spinner ────────────────────────────────────────────────────────────────────
@@ -361,8 +362,8 @@ class Scanner:
         self._imap_pass = None
         try:
             self.imap.logout()
-        except Exception:
-            pass
+        except Exception as e:
+            logging.debug(f"IMAP logout error: {e}")
 
     # ── per-message header processing ──
     def _process_message(self, hdrs):
@@ -406,15 +407,16 @@ class Scanner:
                     org.unsub_links.append(link.group(1))
 
             self.scanned += 1
-        except Exception:
-            pass  # Malformed or unparseable header — skip silently
+        except Exception as e:
+            logging.debug(f"Message processing failed: {e}")
 
     # ── imap scan ──
     def scan_imap(self, progress_cb=None):
         try:
             self.imap.select('"[Gmail]/All Mail"', readonly=True)
             folder_name = 'ALL MAIL'
-        except Exception:
+        except Exception as e:
+            logging.debug(f"Could not select '[Gmail]/All Mail' ({e}), falling back to INBOX")
             self.imap.select('INBOX', readonly=True)
             folder_name = 'INBOX'
             
@@ -524,7 +526,7 @@ class Report:
                                   key=lambda x: x.total_emails, reverse=True)
         self.newsletters = [o for o in self.all if o.unsub_links or o.categories['newsletter'] > 0 or o.final_category in ('newsletters', 'newsletter')]
 
-    def _score(self) -> int:
+    def score(self) -> int:
         """Normalized 0-100 hygiene score, scaled by inbox size to avoid penalizing large inboxes."""
         if not self.all:
             return 100
@@ -535,13 +537,13 @@ class Report:
         s = 100 - (breach_rate * 50) - (inactive_rate * 30) - (noisy_rate * 20)
         return max(0, min(100, round(s)))
 
-    def _score_label(self, s):
+    def score_label(self, s):
         if s >= 80: return G + "Good"    + RS
         if s >= 50: return Y + "Fair"    + RS
         return             R + "At Risk" + RS
 
     # ── header banner ──
-    def _banner(self):
+    def print_banner(self):
         w = 66
         print()
         print(f"  {D}{'─' * w}{RS}")
@@ -550,9 +552,9 @@ class Report:
         print()
 
     # ── score card ──
-    def _scorecard(self):
-        score = self._score()
-        label = self._score_label(score)
+    def print_scorecard(self):
+        score = self.score()
+        label = self.score_label(score)
         b     = bar(score, 100)
         print(f"  {BR}Hygiene Score{RS}   {b}  {BR}{score}{RS}/100  {label}")
         print(f"  {D}{'─' * 66}{RS}")
@@ -585,14 +587,14 @@ class Report:
         print()
 
     # ── section header ──
-    def _section(self, title, subtitle=""):
+    def print_section(self, title, subtitle=""):
         print(f"  {BR}{title}{RS}")
         if subtitle:
             print(f"  {D}{subtitle}{RS}")
         print()
 
     # ── breaches ──
-    def _show_breaches(self):
+    def print_breaches(self):
         if not self.hibp_checked:
             print(f"  {Y}ℹ{RS}  HIBP breach check was skipped.")
             print(f"     To manually check your email for data breaches, visit:")
@@ -602,7 +604,7 @@ class Report:
         if not self.breached:
             print(f"  {G}✓{RS}  No known breaches detected for your email.\n")
             return
-        self._section(
+        self.print_section(
             f"{R}⚠  Breach Alert — {len(self.breached)} service(s){RS}",
             "Your email appeared in data breach dumps for these services."
         )
@@ -614,7 +616,7 @@ class Report:
         print()
 
     # ── master action dashboard ──
-    def _show_dashboard(self):
+    def print_dashboard(self):
         if not self.all:
             return
             
@@ -641,7 +643,7 @@ class Report:
         print(f"  {BR}{C}[*] ======================================================================= [*]{RS}")
 
     # ── summary footer ──
-    def _footer(self):
+    def print_footer(self):
         print(f"  {D}{'─' * 66}{RS}")
         db_src = 'sites.json' if SITES_META else 'hardcoded fallback'
         print(f"  {D}Scanned:  {self.email}   ·   {datetime.now().strftime('%Y-%m-%d %H:%M')}{RS}")
@@ -651,18 +653,18 @@ class Report:
     # ── main print ──
     def print_all(self):
         os.system('cls' if os.name == 'nt' else 'clear')
-        self._banner()
-        self._scorecard()
-        self._show_breaches()
-        self._show_dashboard()
-        self._footer()
+        self.print_banner()
+        self.print_scorecard()
+        self.print_breaches()
+        self.print_dashboard()
+        self.print_footer()
 
     # ── JSON export ──
     def export_json(self, path: str):
         data = {
             'generated':   datetime.now().isoformat(),
             'email':       self.email,
-            'score':       self._score(),
+            'score':       self.score(),
             'summary': {
                 'total_orgs':     len(self.all),
                 'accounts':       len(self.accounts),
@@ -736,7 +738,7 @@ class Report:
         a(f"chekreg — Digital Footprint Report")
         a(f"Email    : {self.email}")
         a(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
-        a(f"Score    : {self._score()}/100")
+        a(f"Score    : {self.score()}/100")
         a("=" * 60)
         a("")
 

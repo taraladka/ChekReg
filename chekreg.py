@@ -136,13 +136,13 @@ def _post_scan_loop(report: Report):
         )
         
         os.system('cls' if os.name == 'nt' else 'clear')
-        report._banner()
+        report.print_banner()
         
         if choice == 0:
-            report._scorecard()
-            report._show_dashboard()
+            report.print_scorecard()
+            report.print_dashboard()
         elif choice == 1:
-            report._show_breaches()
+            report.print_breaches()
         elif choice == 2:
             j_path = os.path.join('reports', 'report.json')
             t_path = os.path.join('reports', 'report.txt')

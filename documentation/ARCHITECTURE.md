@@ -8,7 +8,7 @@ ChekReg is built as a highly robust, zero-trust footprint analysis engine. It le
 2. **Payload Parsing**: Evaluates standard headers (`From`, `Date`, `List-Unsubscribe`).
 3. **Database Resolution**: Cross-references parsed domains against the `data/sites.json` database.
 4. **Scoring Engine**: Evaluates metadata (last active date, breach status) to generate a Safety Score.
-5. **UI Streaming**: Emits parsed, filtered JSON blobs over WebSockets directly to the frontend.
+5. **UI Streaming**: Emits parsed, filtered JSON blobs for the frontend to consume via client polling.
 
 ---
 
