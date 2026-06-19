@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChekReg — Official Documentation</title>
+    <meta name="description" content="Documentation for the ChekReg Zero-Trust footprint mapper.">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .docs-container {
+            max-width: 1400px;
+            width: 100%;
+            height: 100%;
+            margin: 0 auto;
+            display: flex;
+            gap: 3rem;
+            align-items: stretch;
+            overflow: hidden;
+        }
+        
+        .docs-sidebar {
+            flex: 0 0 260px;
+            height: 100%;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            padding-right: 1rem;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none;  /* Internet Explorer 10+ */
+        }
+        
+        .docs-sidebar::-webkit-scrollbar { display: none; /* Safari and Chrome */ }
+        
+        .docs-nav-link {
+            padding: 0.75rem 1rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+        
+        .docs-nav-link:hover {
+            background: var(--bg-elevated);
+            color: var(--text);
+            border-color: var(--border-light);
+        }
+        
+        .docs-nav-link.active {
+            background: var(--green-soft);
+            color: var(--green);
+            border-color: var(--green);
+        }
+        
+        .docs-content {
+            flex: 1;
+            height: 100%;
+            overflow-y: auto;
+            padding: 0 3rem 6rem 1.5rem; /* Extra padding for breathing room */
+            font-size: 1.05rem; /* Increased base font size */
+            line-height: 1.8; /* Looser line height for readability */
+            color: #b0b8b4; /* Slightly brighter, softer gray */
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none;  /* Internet Explorer 10+ */
+        }
+        
+        .docs-content::-webkit-scrollbar { display: none; /* Safari and Chrome */ }
+        
+        .docs-content h1, .docs-content h2, .docs-content h3 {
+            color: var(--text);
+            margin-top: 2.5rem;
+            margin-bottom: 1.2rem;
+            line-height: 1.3;
+        }
+        
+        .docs-content h1 {
+            color: var(--green);
+            font-family: var(--font-mono);
+            font-size: 2.2rem; /* Larger section titles */
+            margin-top: 1rem;
+            border-bottom: 1px solid var(--border-light);
+            padding-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .docs-content h2 {
+            font-size: 1.5rem; /* Larger sub-headings */
+            border-bottom: 1px solid var(--border-light);
+            padding-bottom: 0.5rem;
+            font-weight: 500;
+            color: #ffffff;
+        }
+
+        .docs-content p {
+            margin-bottom: 1.4rem;
+        }
+
+        .docs-content ul, .docs-content ol {
+            margin-bottom: 1.4rem;
+            padding-left: 1.8rem;
+        }
+
+        .docs-content li {
+            margin-bottom: 0.8rem;
+        }
+
+        .docs-content code {
+            background: #151515;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            border: 1px solid #222;
+            color: var(--green); /* Green highlight for inline code */
+        }
+
+        .docs-content pre {
+            background: #0a0a0a;
+            padding: 1.2rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            border: 1px solid var(--border-light);
+            margin-bottom: 1.8rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5); /* Depth for code blocks */
+        }
+        
+        .docs-content pre code {
+            border: none;
+            padding: 0;
+            color: #d1d5db; /* Neutral text for block code */
+            background: transparent;
+            line-height: 1.6;
+        }
+
+        .docs-content strong {
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        .docs-section {
+            margin-bottom: 4rem;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        
+        .sidebar-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .docs-nav-sublink {
+            padding: 0.4rem 1rem 0.4rem 1.8rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+            display: block;
+            border-left: 2px solid transparent;
+            margin-left: 1rem;
+        }
+        
+        .docs-nav-sublink:hover {
+            color: var(--text);
+            border-left-color: var(--border-light);
+            background: var(--bg-elevated);
+        }
+        
+        .docs-nav-sublink.active {
+            color: var(--green);
+            border-left-color: var(--green);
+            font-weight: 500;
+            background: rgba(0, 255, 170, 0.05);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-wrapper">
+
+    <!-- ── TOP NAVIGATION ── -->
+    <header class="navbar">
+        <div class="brand">
+            <i class="fa-solid fa-terminal brand-icon"></i>
+            <h1>chekreg</h1>
+            <span>documentation</span>
+        </div>
+        <div id="nav-actions" style="display: flex; gap: 1rem; align-items: center;">
+            <div style="display:flex; align-items:center; gap: 0.5rem; overflow: visible;">
+                <div class="tooltip-container tooltip-down">
+                    <i class="fa-solid fa-circle-info" style="color:var(--text-muted); cursor:help; font-size: 0.9rem;"></i>
+                    <div class="tooltip-content" style="right:0; width:250px; font-weight:normal; text-transform:none; text-align:left;">
+                        <strong style="color:var(--green);">Return to Scanner</strong>
+                        <div style="margin-top: 0.5rem;">This will lead you to the input box and clear all session cache from the browser. If you want to return to the dashboard later, use the browser's Back/Forward navigation buttons instead (Which will also be eventually cleared when you stop your terminal CLI and use CTRL+C).</div>
+                    </div>
+                </div>
+                <button onclick="sessionStorage.removeItem('chekreg_dashboard'); window.location.href='/';" class="btn btn-secondary">
+                    <i class="fa-solid fa-arrow-left"></i> Back to Scanner
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="docs-container">
+            
+            <!-- Sidebar Navigation -->
+            <aside class="docs-sidebar" id="dynamic-sidebar">
+                <!-- Dynamically populated via JavaScript -->
+            </aside>
+
+            <!-- Main Documentation Area -->
+            <div class="docs-content panel">
+                
+                <!-- SECTION: GETTING STARTED -->
+                <div id="getting-started" class="docs-section active">
+                    <h1>Getting Started</h1>
+                    <p>ChekReg is a privacy-first, locally-executed digital footprint auditor. It was built by <a href="https://github.com/taraladka" target="_blank" style="color:var(--green); text-decoration:underline;">taraladka</a> as a personal tool to map an email-based digital footprint without needing to share inbox access with any external service. It worked well enough that it seemed worth sharing openly with anyone who finds it useful.</p>
+                    <blockquote style="border-left: 4px solid var(--green); padding-left: 1rem; margin-left: 0; color: var(--text-muted); font-size: 0.85rem; background: var(--bg); padding: 1rem; border-radius: 0 4px 4px 0;">
+                        <strong>OSINT vs. CSINT:</strong> While ChekReg employs Open-Source Intelligence workflows — such as cross-referencing public breach databases — its primary data source is an authenticated, private email inbox. As that seed data is not publicly accessible, the methodology falls under Closed-Source Intelligence (CSINT).
+                    </blockquote>
+
+                    <p style="color:var(--text-muted); font-size: 0.88rem; font-style: italic; border: 1px solid var(--border-light); padding: 0.75rem 1rem; border-radius: 6px; margin-bottom: 1.5rem;">If you are viewing this page from a running local dashboard, the steps below have already been completed. They are retained here for reference and for users accessing this documentation externally.</p>
+
+                    <h2>1. Prerequisites</h2>
+                    <ul>
+                        <li>Python 3.8 or later</li>
+                        <li><a href="https://datatracker.ietf.org/doc/html/rfc3501" target="_blank" style="color:var(--green); text-decoration:underline;" title="RFC 3501: Internet Message Access Protocol">IMAP</a> access enabled on the target email account</li>
+                    </ul>
+
+                    <h2>2. Installation</h2>
+                    <ol>
+                        <li>Clone the repository:
+<pre><code>git clone https://github.com/taraladka/ChekReg.git
+cd ChekReg-IMAP</code></pre>
+                        </li>
+                        <li>Create and activate a virtual environment:
+<pre><code># Windows
+python -m venv venv
+venv\Scripts\activate
+
+# macOS / Linux
+python3 -m venv venv
+source venv/bin/activate</code></pre>
+                        </li>
+                        <li>Install dependencies:
+<pre><code>pip install --upgrade tldextract colorama flask duckduckgo-search requests</code></pre>
+                        </li>
+                    </ol>
+
+                    <h2 id="app-passwords">3. Generating an App Password</h2>
+                    <p>Modern email providers block third-party clients from authenticating with a primary account password. ChekReg requires an application-specific password, which grants scoped IMAP access without exposing your primary credentials.</p>
+
+                    <h3>Gmail</h3>
+                    <ol>
+                        <li>Navigate to your <a href="https://myaccount.google.com/security" target="_blank" style="color:var(--green); text-decoration:underline;">Google Account Security</a> page.</li>
+                        <li>Confirm that <strong>2-Step Verification</strong> is active.</li>
+                        <li>Search for <strong>"App passwords"</strong> using the account search bar.</li>
+                        <li>Generate a new password and label it <em>ChekReg</em>.</li>
+                        <li>Google will issue a 16-character token (e.g., <code>abcd efgh ijkl mnop</code>). Store it securely before closing the dialog.</li>
+                    </ol>
+
+                    <h3>Microsoft Outlook / Hotmail</h3>
+                    <ol>
+                        <li>Navigate to <a href="https://account.live.com/proofs/manage/additional" target="_blank" style="color:var(--green); text-decoration:underline;">Microsoft Account Advanced Security Options</a>.</li>
+                        <li>Ensure <strong>Two-step verification</strong> is enabled.</li>
+                        <li>Under "App passwords", select <strong>Create a new app password</strong>.</li>
+                        <li>Copy the generated token and store it securely.</li>
+                    </ol>
+
+                    <h3>Yahoo Mail &amp; AOL</h3>
+                    <ol>
+                        <li>Navigate to the <a href="https://login.yahoo.com/account/security" target="_blank" style="color:var(--green); text-decoration:underline;">Yahoo Account Security</a> page.</li>
+                        <li>Verify that <strong>2-Step Verification</strong> is enabled under "How you sign in".</li>
+                        <li>Select <strong>Generate and manage app passwords</strong>.</li>
+                        <li>Enter <em>ChekReg</em> as the application name and generate the password.</li>
+                        <li>Copy the 16-character token (spaces omitted) into ChekReg when prompted.</li>
+                    </ol>
+
+                    <h3>Apple iCloud Mail</h3>
+                    <ol>
+                        <li>Sign in to your <a href="https://appleid.apple.com/account/manage" target="_blank" style="color:var(--green); text-decoration:underline;">Apple ID account</a>.</li>
+                        <li>Under <strong>Sign-In and Security</strong>, select <strong>App-Specific Passwords</strong>.</li>
+                        <li>Click the <code>+</code> button to generate a new password.</li>
+                        <li>Label it <em>ChekReg</em> and confirm with your Apple ID credentials if prompted.</li>
+                        <li>Copy the generated 16-character string before dismissing the dialog.</li>
+                    </ol>
+
+                    <h3>Custom or Private IMAP Providers</h3>
+                    <p>If you operate a self-hosted or corporate IMAP server, app passwords may not be required depending on server configuration. Use your standard credentials, or contact your system administrator if authentication fails.</p>
+
+                    <h2>4. Running ChekReg</h2>
+                    <p>Launch the engine from the project root:</p>
+                    <pre><code>python chekreg.py</code></pre>
+                    <p>The CLI will guide you through the following steps:</p>
+                    <ol>
+                        <li><strong>Interface selection:</strong> Enter <code>2</code> to launch the local Flask web interface on <code>localhost:5000</code>, or <code>1</code> for terminal output.</li>
+                        <li><strong>Authentication:</strong> Provide the target email address and the generated App Password.</li>
+                        <li><strong>IMAP endpoint:</strong> Select your email provider from the list.</li>
+                    </ol>
+                    <p>The scan executes entirely on your local machine. Credentials are stored in volatile memory and are irrecoverably destroyed upon process termination.</p>
+                </div>
+
+                <!-- SECTION: PRIVACY & SECURITY -->
+                <div id="privacy-security" class="docs-section">
+                    <h1>Privacy &amp; Security Model</h1>
+                    <p>Many tools that help you manage your digital footprint require connecting your inbox to an external service via OAuth. That is a perfectly reasonable approach for many people, and those services offer real value. ChekReg simply takes a different path — one that keeps everything local. No data leaves your machine during a scan.</p>
+                    <p>ChekReg operates under a <strong>Zero-Trust, Local-First architecture</strong>. Your credentials and email metadata stay entirely on your own hardware.</p>
+
+                    <h2>1. Local Execution</h2>
+                    <p>ChekReg runs as a Python process on your own hardware. There are no intermediary servers.</p>
+                    <ul>
+                        <li><strong>No External Routing:</strong> Email data is never transmitted to or processed by any server other than your provider's IMAP endpoint.</li>
+                        <li><strong>No Telemetry:</strong> The engine collects no usage data, crash reports, or analytics of any kind.</li>
+                        <li><strong>Direct IMAP Connection:</strong> Authentication is performed directly from your machine to your provider's IMAP server over an encrypted <code>SSL/TLS</code> tunnel on port 993.</li>
+                    </ul>
+
+                    <h2>2. Ephemeral Credential Handling</h2>
+                    <p>ChekReg is designed to hold credentials for the minimum duration necessary to complete a scan.</p>
+                    <ul>
+                        <li><strong>Volatile Storage:</strong> The App Password is held exclusively in process RAM. It is never written to disk, a configuration file, a database, or any persistent cache.</li>
+                        <li><strong>Process Termination:</strong> Issuing <code>Ctrl+C</code> or closing the terminal window immediately destroys the process and all in-memory credentials. Additionally, the <em>New Scan</em> button in the web interface and the <em>Back to Scanner</em> button on this page both execute an explicit browser cache flush, clearing all <code>sessionStorage</code> data before returning to the input screen. No residual scan data is retained in the browser.</li>
+                    </ul>
+
+                    <h2>3. Minimal Privilege Data Extraction</h2>
+                    <p>ChekReg requests only the subset of mailbox data required for its analysis.</p>
+                    <ul>
+                        <li><strong>Header-Only:</strong> The engine issues <code>RFC822.HEADER</code> fetch commands. Email bodies and attachments are never requested or read. Only the <code>From:</code>, <code>List-Unsubscribe:</code>, and <code>Date:</code> fields are parsed.</li>
+                        <li><strong>Read-Only Mode:</strong> The IMAP session is opened with <code>readonly=True</code>. The engine is structurally incapable of modifying, flagging, or deleting any message.</li>
+                    </ul>
+
+                    <h2 id="hibp">4. Have I Been Pwned Integration</h2>
+                    <p>Breach checking is entirely opt-in. If enabled, the engine makes outbound HTTPS requests to the <a href="https://haveibeenpwned.com" target="_blank" style="color:var(--green); text-decoration:underline;">haveibeenpwned.com</a> API.</p>
+                    <ul>
+                        <li>Only the domain names extracted from your footprint are transmitted — never your email address or any message content.</li>
+                        <li>If checking email-level breach exposure, the request is made to the official HIBP <code>/breachedaccount</code> endpoint over HTTPS.</li>
+                        <li>Disabling the HIBP toggle results in a fully offline scan, resolved exclusively against the local <code>data/sites.json</code> database.</li>
+                    </ul>
+                </div>
+
+                <!-- SECTION: UNDERSTANDING LABELS -->
+                <div id="understanding-labels" class="docs-section">
+                    <h1>Labels &amp; Metrics</h1>
+                    <p>ChekReg assigns each discovered service a set of descriptive labels based on what was found in the mailbox. Because labels represent independent properties, <strong>a single service can carry multiple labels simultaneously</strong>. As a result, the sidebar counts reflect overlapping sets and will not sum to the total service count.</p>
+
+                    <h2>1. Type Labels</h2>
+                    <p>Each service receives exactly one type label, determined by the links present in its associated emails:</p>
+                    <ul>
+                        <li><strong><span style="color:var(--text);">General Account</span></strong> — A direct deletion URL is available in the <code>sites.json</code> database, but no <code>List-Unsubscribe</code> header was detected.</li>
+                        <li><strong><span style="color:var(--text);">Newsletter</span></strong> — A <code>List-Unsubscribe</code> link was found, but no deletion URL is recorded in the database.</li>
+                        <li><strong><span style="color:var(--green);">Hybrid</span></strong> — Both an unsubscribe mechanism and a direct deletion URL are available. This is the most actionable classification.</li>
+                        <li><strong><span style="color:var(--text-muted);">Other</span></strong> — Neither a deletion URL nor an unsubscribe link could be determined.</li>
+                    </ul>
+
+                    <h2>2. State Labels</h2>
+                    <p>State labels are applied independently of type and may co-exist with any combination of other labels:</p>
+                    <ul>
+                        <li><strong><span style="color:var(--warning);">Ghost</span></strong> — No email activity has been detected from this service in the past six months. Dormant accounts represent an elevated risk of unauthorised access.</li>
+                        <li><strong><span style="color:var(--danger);">Compromised</span></strong> — The service domain appears in a known public data breach, as reported by Have I Been Pwned.</li>
+                        <li><strong><span style="color:var(--text);">Spam &amp; Clutter</span></strong> — A notably high volume of emails has been received from this sender. This could be newsletters, promotions, or automated alerts — worth reviewing if your inbox feels noisy.</li>
+                    </ul>
+
+                    <h2>Illustrative Example</h2>
+                    <p>Consider a news digest service you subscribed to several years ago. If that service has experienced a data breach, and no email has been received from them in over six months, it would simultaneously carry the <strong>Newsletter</strong>, <strong>Ghost</strong>, and <strong>Compromised</strong> labels — three independent properties applied to a single entity.</p>
+                </div>
+
+                <!-- SECTION: ARCHITECTURE -->
+                <div id="architecture" class="docs-section">
+                    <h1>System Architecture</h1>
+                    <p>ChekReg is structured as a three-layer system: a core analysis engine, a lightweight local web server, and a dependency-free frontend client. All processing occurs on the user's machine.</p>
+
+                    <h2>Data Flow Overview</h2>
+                    <ol>
+                        <li><strong>IMAP Connection:</strong> Establishes an authenticated, read-only <code>IMAP4_SSL</code> session directly with the provider's mail server.</li>
+                        <li><strong>Header Extraction:</strong> Fetches <code>RFC822.HEADER</code> payloads exclusively; email bodies are never requested.</li>
+                        <li><strong>Domain Resolution:</strong> Parses sender domains using TLD extraction and cross-references them against <code>data/sites.json</code>.</li>
+                        <li><strong>Heuristic Scoring:</strong> Evaluates per-service metadata — last activity date, breach status, volume — to compute a safety profile.</li>
+                        <li><strong>Result Streaming:</strong> Serialises the resolved footprint as a JSON payload and streams it to the frontend over a local WebSocket connection.</li>
+                    </ol>
+
+                    <h2>1. Core Engine (<code>engine.py</code>)</h2>
+                    <p>The <code>FootprintEngine</code> class in <code>engine.py</code> orchestrates all analysis phases.</p>
+                    
+                    <h3>Phase 1 — Authentication</h3>
+                    <p>Binds to the provider's IMAP server on port 993 via <code>IMAP4_SSL</code>. Standard password authentication is rejected by most modern providers; an App Password is therefore required for all supported platforms.</p>
+                    
+                    <h3>Phase 2 — Metadata Extraction</h3>
+                    <p>To minimise both latency and data exposure, only email headers are fetched. The engine parses three specific fields:</p>
+                    <ul>
+                        <li><code>From</code> — Identifies the originating service domain.</li>
+                        <li><code>List-Unsubscribe</code> — Captures opt-out mechanisms for newsletter classification.</li>
+                        <li><code>Date</code> — Provides the timestamp required for ghost account detection.</li>
+                    </ul>
+
+                    <h3>Phase 3 — Database Resolution</h3>
+                    <p>Each extracted domain is looked up against <code>data/sites.json</code>, which maps domains to human-readable service names, categories, and direct account deletion endpoints (<code>delete_url</code>).</p>
+
+                    <h2>2. Web Server (<code>server.py</code>)</h2>
+                    <p>An ephemeral <a href="https://flask.palletsprojects.com/" target="_blank" style="color:var(--green); text-decoration:underline;">Flask</a> instance serves the frontend on <code>localhost:5000</code>. The server is strictly local and has no external network exposure.</p>
+                    <p>Live scan progress is delivered via <code>flask_sock</code> WebSockets. Two frame types are emitted during a scan:</p>
+                    <ul>
+                        <li><code>status</code> — Incremental progress updates: <code>{"type": "status", "current": 200, "total": 5000}</code></li>
+                        <li><code>complete</code> — The fully resolved footprint payload, consumed by the frontend for rendering.</li>
+                    </ul>
+
+                    <h2>3. Frontend Client (<code>static/</code>)</h2>
+                    <p>The interface is implemented in plain HTML, CSS, and JavaScript with no runtime dependencies or build steps.</p>
+                    <ul>
+                        <li><strong>Auditable by Design:</strong> The absence of third-party frameworks means any user can inspect the full client source in a text editor. There are no minified bundles or opaque dependencies.</li>
+                        <li><strong>Dynamic Rendering:</strong> <code>script.js</code> consumes the boolean flags in the backend payload to render and filter service cards client-side without additional server round-trips.</li>
+                    </ul>
+                </div>
+
+                <!-- SECTION: CONTRIBUTING -->
+                <div id="contributing" class="docs-section">
+                    <h1>Contributing</h1>
+                    <p>At this stage, the only area open for external contributions is the service database — <code>data/sites.json</code>. The codebase itself is not open to pull requests at the moment, and that may change in the future.</p>
+                    <p>The database is still quite small. If you come across a service that ChekReg doesn't recognise, adding it is genuinely useful and straightforward — no code required.</p>
+
+                    <h2>Expanding the Database (<code>sites.json</code>)</h2>
+                    <p>Each entry in <code>data/sites.json</code> maps a root domain to a human-readable name, a category, and a direct account deletion or Data Subject Access Request (DSAR) URL.</p>
+
+                    <h3>Entry Format</h3>
+<pre><code>{
+    "canva.com": {
+        "name": "Canva",
+        "category": "design",
+        "delete_url": "https://www.canva.com/settings/your-account"
+    }
+}</code></pre>
+
+                    <h3>How to Add a Service</h3>
+                    <ol>
+                        <li>Identify the root domain the service uses as its sender address (e.g., <code>marketing.uber.com</code> resolves to <code>uber.com</code> via the TLD extractor).</li>
+                        <li>Find the official page where an account holder can submit a deletion request or DSAR. Prefer first-party settings pages.</li>
+                        <li>Add the entry in alphabetical order within the JSON object.</li>
+                        <li>Submit a Pull Request against the main branch with a brief note on what was added.</li>
+                    </ol>
+
+                    <h2>The Auto-Resolver Engine</h2>
+                    <p>ChekReg includes an integrated 4-stage pipeline to automatically discover account deletion endpoints for services not yet cataloged in <code>sites.json</code>. You can trigger this engine directly from the Web Dashboard (via the <strong>Auto-Resolve</strong> button) or from the CLI Developer Tools menu.</p>
+
+                    <h3>How it Works</h3>
+                    <ul style="margin-bottom: 1.5rem;">
+                        <li><strong>Stage 1: JustDeleteMe Database</strong> — A fast, offline cross-reference against the open-source JustDeleteMe dataset.</li>
+                        <li><strong>Stage 2: DNS Validation</strong> — Verifies domain resolution to quickly discard offline, parked, or dead domains to save processing time.</li>
+                        <li><strong>Stage 3: Well-known Path Probing</strong> — Issues fast <code>HEAD</code> requests to common URL patterns (e.g., <code>/settings/account</code>, <code>/account/delete</code>, <code>/unsubscribe</code>).</li>
+                        <li><strong>Stage 4: Search Engine Fallback</strong> — Utilizes DuckDuckGo to query for account management pages. It employs strict path-filtering heuristics to ensure the grabbed link is an actionable settings or deletion page rather than a generic privacy policy.</li>
+                    </ul>
+
+                    <blockquote style="border-left: 4px solid var(--warning); padding-left: 1rem; margin-left: 0; color: var(--text-muted); font-size: 0.85rem; background: var(--bg); padding: 1rem; border-radius: 0 4px 4px 0;">
+                        <strong>Resolver Accuracy (~85%):</strong> The Auto-Resolver is highly effective but not perfect. Accuracy hovers around 85%. Search engine fallbacks can occasionally pull outdated URLs, and advanced anti-bot protections on some websites might block the path-probing stage. <strong>We highly encourage developers to manually verify the resolved links and submit a PR to improve the shared database!</strong>
+                    </blockquote>
+                    
+                    <h2 style="color: var(--green);">We Need Your Contributions</h2>
+                    <p>The core of ChekReg's capability relies on the community-driven <code>data/sites.json</code> database. The internet is vast, and many obscure regional or niche services are still missing.</p>
+                    <p>If the Auto-Resolver successfully finds links for your missing accounts, please consider contributing them back! Every new verified link helps hundreds of other users cleanly erase their footprint.</p>
+                    
+                    <h3>How to Contribute</h3>
+                    <ol>
+                        <li>Run the Auto-Resolver from the Web UI or CLI.</li>
+                        <li>Verify the newly appended links in your <code>data/sites.json</code> file.</li>
+                        <li>Fork the repository and submit a Pull Request against the main branch. No code changes required—just the raw JSON updates!</li>
+                    </ol>
+
+                    <h3>CLI Arguments & Flags</h3>
+                    <p>You can bypass the interactive menu by launching ChekReg using the following flags:</p>
+                    <ul style="margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                        <li><code>python chekreg.py</code> - Starts the interactive selector menu.</li>
+                        <li><code>python chekreg.py --web</code> - Immediately launches the Web Dashboard.</li>
+                        <li><code>python chekreg.py --cli</code> - Immediately launches the Terminal Footprint Mapper.</li>
+                        <li><code>python chekreg.py --help</code> - Shows the help output and CLI information.</li>
+                    </ul>
+                </div>
+                
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const sidebar = document.getElementById('dynamic-sidebar');
+    const content = document.querySelector('.docs-content');
+    
+    // Find all H1 and H2 headers in the content
+    const headers = content.querySelectorAll('h1, h2');
+    
+    let currentH1Group = null;
+    
+    headers.forEach(header => {
+        // Ensure header has an ID for anchoring
+        if (!header.id) {
+            header.id = header.innerText.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+        }
+        
+        if (header.tagName === 'H1') {
+            const link = document.createElement('a');
+            link.href = '#' + header.id;
+            link.className = 'docs-nav-link';
+            link.dataset.target = header.id;
+            
+            // Assign icon based on text
+            let iconClass = 'fa-solid fa-folder';
+            const txt = header.innerText.toLowerCase();
+            if (txt.includes('getting started')) iconClass = 'fa-solid fa-rocket';
+            else if (txt.includes('privacy')) iconClass = 'fa-solid fa-shield-halved';
+            else if (txt.includes('labels')) iconClass = 'fa-solid fa-tags';
+            else if (txt.includes('architecture')) iconClass = 'fa-solid fa-sitemap';
+            else if (txt.includes('contributing')) iconClass = 'fa-solid fa-code-pull-request';
+            
+            link.innerHTML = `<i class="${iconClass}" style="width: 20px;"></i> ${header.innerText}`;
+            
+            const group = document.createElement('div');
+            group.className = 'sidebar-group';
+            group.appendChild(link);
+            sidebar.appendChild(group);
+            
+            currentH1Group = group;
+        } else if (header.tagName === 'H2' && currentH1Group) {
+            const link = document.createElement('a');
+            link.href = '#' + header.id;
+            link.className = 'docs-nav-sublink';
+            link.dataset.target = header.id;
+            link.innerText = header.innerText;
+            currentH1Group.appendChild(link);
+        }
+    });
+
+    const allLinks = document.querySelectorAll('.docs-sidebar a');
+    
+    // Scroll Spy using IntersectionObserver
+    const observerOptions = {
+        root: content,
+        rootMargin: '0px 0px -75% 0px', // Trigger when header is in the top 25% of the viewport
+        threshold: 0
+    };
+    
+    let activeId = '';
+    
+    const observer = new IntersectionObserver((entries) => {
+        // We only care about intersecting headers, pick the last one (furthest down but visible)
+        let found = false;
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                activeId = entry.target.id;
+                found = true;
+            }
+        });
+        
+        if (found && activeId) {
+            allLinks.forEach(l => {
+                l.classList.remove('active');
+                if (l.dataset.target === activeId) {
+                    l.classList.add('active');
+                    // Highlight parent H1 if we are an H2
+                    if (l.classList.contains('docs-nav-sublink')) {
+                        const parentH1 = l.parentElement.querySelector('.docs-nav-link');
+                        if (parentH1) parentH1.classList.add('active');
+                    }
+                }
+            });
+        }
+    }, observerOptions);
+    
+    headers.forEach(h => observer.observe(h));
+    
+    // Smooth scroll interception
+    sidebar.addEventListener('click', (e) => {
+        const link = e.target.closest('a');
+        if (link) {
+            e.preventDefault();
+            const targetId = link.getAttribute('href').substring(1);
+            const targetEl = document.getElementById(targetId);
+            if (targetEl) {
+                content.scrollTo({
+                    top: targetEl.offsetTop - 20,
+                    behavior: 'smooth'
+                });
+                history.pushState(null, null, '#' + targetId);
+            }
+        }
+    });
+    
+    // Handle initial hash load correctly
+    if (window.location.hash) {
+        const tId = window.location.hash.substring(1);
+        const tEl = document.getElementById(tId);
+        if (tEl) {
+            setTimeout(() => {
+                content.scrollTo({ top: tEl.offsetTop - 20, behavior: 'smooth' });
+            }, 100);
+        }
+    }
+});
+</script>
+
+</body>
+</html>

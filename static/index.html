@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>chekreg — Digital Footprint Mapper</title>
+    <meta name="description" content="Map your complete digital footprint locally. Developer-centric, private.">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+
+<div class="app-wrapper">
+
+    <!-- ── TOP NAVIGATION ── -->
+    <header class="navbar">
+        <div class="brand">
+            <i class="fa-solid fa-terminal brand-icon"></i>
+            <h1>chekreg</h1>
+            <span>footprint mapper</span>
+        </div>
+        <div id="nav-actions" class="hidden" style="display: flex; gap: 1rem; align-items: center;">
+            <div style="display:flex; align-items:center; gap: 0.5rem; overflow: visible;">
+                <div class="tooltip-container tooltip-down">
+                    <i class="fa-solid fa-circle-info" style="color:var(--text-muted); cursor:help; font-size: 0.9rem;"></i>
+                    <div class="tooltip-content" style="right:0; width:250px; font-weight:normal; text-transform:none; text-align:left;">
+                        <strong style="color:var(--green);">Start Over</strong>
+                        <div style="margin-top: 0.5rem;">This will lead you to the input box and clear all session cache from the browser. If you want to return to the docs later, use the browser's Back/Forward navigation buttons instead (Which will also be eventually cleared when you stop your terminal CLI and use CTRL+C).</div>
+                    </div>
+                </div>
+                <button class="btn btn-secondary" onclick="sessionStorage.removeItem('chekreg_dashboard'); location.reload();">
+                    <i class="fa-solid fa-rotate-left"></i> New Scan
+                </button>
+            </div>
+            <button id="btn-resolve" class="btn btn-secondary" onclick="openResolver()" title="Find missing deletion links automatically">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> Auto-Resolve
+            </button>
+            <a href="/docs.html" class="btn btn-secondary" style="text-decoration:none;">
+                <i class="fa-solid fa-book"></i> Docs
+            </a>
+        </div>
+    </header>
+
+    <main class="main-content">
+
+        <!-- ── SETUP / LOGIN ── -->
+        <div id="view-setup" class="setup-container panel">
+            <div class="setup-header">
+                <h2 style="font-family:var(--font-mono); margin-bottom: 0.5rem; color: var(--green);">
+                    Discover Your Digital Footprint
+                </h2>
+                <p style="color:var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem; line-height: 1.4;">
+                    Know exactly where you've registered accounts or subscribed to newsletters. Revoke access, delete ghosts, and unsubscribe with ease. Credentials are never sent outside this machine.
+                </p>
+            </div>
+
+            <form id="scan-form" class="form-grid">
+                <div class="field">
+                    <label><i class="fa-solid fa-envelope"></i> Email Address</label>
+                    <input type="email" id="email" placeholder="you@example.com" required>
+                </div>
+
+                <div class="field">
+                    <label><i class="fa-solid fa-server"></i> Provider Profile</label>
+                    <select id="provider">
+                        <option value="imap.gmail.com|993">Google / Gmail</option>
+                        <option value="outlook.office365.com|993">Microsoft Outlook</option>
+                        <option value="imap.mail.yahoo.com|993">Yahoo Mail</option>
+                        <option value="imap.mail.me.com|993">Apple iCloud</option>
+                        <option value="custom">Custom IMAP Configuration...</option>
+                    </select>
+                </div>
+
+                <div class="field-group" id="custom-fields" style="display:none;">
+                    <div class="field" style="flex:1">
+                        <label>IMAP Host</label>
+                        <input type="text" id="host" value="imap.gmail.com">
+                    </div>
+                    <div class="field" style="flex:0 0 100px">
+                        <label>Port</label>
+                        <input type="number" id="port" value="993">
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label style="display:flex; align-items:center; gap: 0.5rem; overflow: visible;">
+                        <span><i class="fa-solid fa-key"></i> App Password</span>
+                        <div class="tooltip-container">
+                            <a href="/docs.html#app-passwords" style="color:var(--text-muted); text-decoration:none;"><i class="fa-solid fa-circle-info" style="font-size:0.85rem;"></i></a>
+                            <div class="tooltip-content">
+                                <strong style="color:var(--green);">App Password Required</strong>
+                                <div style="margin-top: 0.5rem;">Due to modern security standards, primary email passwords will not work. You must generate a dedicated App Password from your provider.</div>
+                                <div style="margin-top: 0.5rem; text-align: center;"><a href="/docs.html#app-passwords" style="color:var(--green); text-decoration:underline;">Read generation guide in Docs</a></div>
+                            </div>
+                        </div>
+                    </label>
+                    <input type="password" id="password" placeholder="16-character app password" required>
+                </div>
+
+                <div class="field" style="margin-top: 0.5rem; margin-bottom: -0.5rem;">
+                    <label style="display:flex; align-items:center; gap: 0.75rem; cursor:pointer; overflow: visible;">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="use-hibp">
+                            <span class="slider"></span>
+                        </label>
+                        <span style="display:flex; align-items:center; gap:0.5rem; overflow:visible;">
+                            Enable HIBP Breach Check
+                            <div class="tooltip-container">
+                                <a href="/docs.html#hibp" style="color:var(--text-muted); text-decoration:none;"><i class="fa-solid fa-circle-info" style="font-size:0.85rem;"></i></a>
+                                <div class="tooltip-content">
+                                    <strong style="color:var(--green);">Have I Been Pwned (HIBP)</strong>
+                                    <div style="margin-top: 0.5rem;"><strong>Skippable:</strong> Yes. If skipped, ChekReg performs a fully offline footprint scan against its local database.</div>
+                                    <div style="margin-top: 0.5rem;"><strong>If enabled:</strong> ChekReg securely checks your footprint against HIBP to flag compromised services. Requires a valid HIBP API key.</div>
+                                    <div style="margin-top: 0.5rem; text-align: center;"><a href="/docs.html#hibp" style="color:var(--green); text-decoration:underline;">Read more in Docs</a></div>
+                                </div>
+                            </div>
+                        </span>
+                    </label>
+                </div>
+
+                <div class="field" id="hibp-field" style="display:none; margin-top: 0;">
+                    <input type="password" id="hibp-key" placeholder="HIBP API Key">
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="margin-top: 0.25rem;">
+                    <i class="fa-solid fa-play"></i> Execute Scan
+                </button>
+            </form>
+            
+            <div style="text-align: center; margin-top: 1.5rem; font-size: 0.75rem; color: var(--text-muted);">
+                By using ChekReg, you agree to the <a href="/terms.html" style="color: var(--green); text-decoration: underline;">Terms of Use</a>.
+            </div>
+        </div>
+
+        <!-- ── SCANNING TERMINAL ── -->
+        <div id="view-scanning" class="terminal-box hidden">
+            <div class="term-header">
+                <i class="fa-solid fa-terminal"></i>
+                <h2>Running analysis...</h2>
+            </div>
+            
+            <div class="term-progress">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="pf" style="width:0%"></div>
+                </div>
+                <div class="term-status">
+                    <span id="pm">Establishing connection...</span>
+                    <span id="pp">0%</span>
+                </div>
+            </div>
+
+            <div id="term-log">
+                > Initializing chekreg engine...<br>
+                > Loading local footprint database...<br>
+            </div>
+        </div>
+
+        <!-- ── RESULTS DASHBOARD ── -->
+        <div id="view-results" class="dashboard-grid hidden">
+            
+            <!-- Sidebar Stats -->
+            <aside class="sidebar">
+                <div class="panel score-panel">
+                    <div class="score-value" id="r-score">--</div>
+                    <div class="score-label">Safety Score</div>
+                    <div class="score-insight" id="r-insight" style="margin-top: 0.5rem; font-size: 0.75rem; font-weight: 500; text-transform: uppercase;">--</div>
+                    <div id="r-action" style="margin-top: 1rem; font-size: 0.75rem; color: var(--text-secondary); line-height: 1.4;"></div>
+                </div>
+
+                <div class="panel stats-list">
+                    <div class="stat-row">
+                        <div class="stat-label" title="Total number of organizations detected in all the mails."><i class="fa-solid fa-database"></i> Services</div>
+                        <div class="stat-val" id="s-orgs">0</div>
+                    </div>
+                    <div class="stat-row danger">
+                        <div class="stat-label" title="Services that have suffered a known data breach."><i class="fa-solid fa-triangle-exclamation"></i> Breached</div>
+                        <div class="stat-val" id="s-breach">0</div>
+                    </div>
+                    <div class="stat-row warning">
+                        <div class="stat-label" title="Accounts with no recent activity or logins within the last 6 months."><i class="fa-solid fa-ghost"></i> Ghost Acc</div>
+                        <div class="stat-val" id="s-ghost">0</div>
+                    </div>
+                    <div class="stat-row">
+                        <div class="stat-label" title="Marketing or promotional mailing lists."><i class="fa-solid fa-envelope-open-text"></i> Newsletters</div>
+                        <div class="stat-val" id="s-news">0</div>
+                    </div>
+                    <div style="margin-top: 1rem; font-size: 0.7rem; color: var(--text-muted); line-height: 1.4; text-align: center; font-family: var(--font-sans);">
+                        *Note: Counts may not perfectly sum to Services due to overlapping Hybrid accounts.
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Workspace -->
+            <section class="content-area panel">
+                
+                <!-- ALL TAB (Unified Grid) -->
+                <div class="view-pane active" id="pane-all">
+                    <div class="search-container" style="margin-bottom: 1rem; position: relative;">
+                        <i class="fa-solid fa-search" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
+                        <input type="text" id="org-search" class="search-input" placeholder="Search for any service, domain, or company...">
+                    </div>
+                    <div class="filter-row" id="filter-container">
+                        <!-- populated via JS -->
+                    </div>
+                    <div class="data-grid" id="grid-all"></div>
+                </div>
+
+            </section>
+
+        </div>
+
+    </main>
+
+<!-- ── RESOLVER MODAL ── -->
+<div id="resolve-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:1000; display:none; align-items:center; justify-content:center; backdrop-filter: blur(5px);">
+    <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:16px; width:min(800px,90vw); max-height:85vh; display:flex; flex-direction:column; overflow:hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.4);">
+        <!-- Header -->
+        <div style="padding:1.5rem 2rem; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background: rgba(0,0,0,0.2);">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <div style="width: 40px; height: 40px; border-radius: 8px; background: rgba(82, 196, 26, 0.15); display: flex; align-items: center; justify-content: center; color: var(--green); font-size: 1.2rem;">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                </div>
+                <div>
+                    <h3 style="margin:0; font-family:var(--font-sans); color:var(--text); font-size:1.1rem; font-weight: 600;">Auto-Resolve Missing Links</h3>
+                    <div style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.2rem;">Extract missing links and resolve them using the 4-stage pipeline.</div>
+                </div>
+            </div>
+            <button onclick="closeResolver()" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.2rem; transition: color 0.2s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text-muted)'">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <!-- Terminal Body -->
+        <div style="background: #0d1117; padding: 1.5rem; flex:1; display:flex; flex-direction:column; overflow: hidden; position: relative;">
+            <div id="resolve-log" style="flex:1; overflow-y:auto; font-family:var(--font-mono); font-size:0.85rem; line-height:1.6; color:var(--text-secondary); padding-right: 1rem; max-height:45vh;">
+                <span style="color:var(--text-muted);">Ready to initiate 4-stage pipeline...</span>
+            </div>
+        </div>
+        <!-- Stats Body -->
+        <div id="resolve-stats" style="padding:1rem 2rem; border-top:1px solid var(--border); display:none; background: rgba(0,0,0,0.2);">
+            <!-- updated in js -->
+        </div>
+        <!-- Footer -->
+        <div style="padding:1rem 2rem; border-top:1px solid var(--border); display:flex; gap:1rem; justify-content:flex-end; background: var(--bg-card); align-items: center;">
+            <div id="resolve-progress-text" style="margin-right: auto; color: var(--text-muted); font-size: 0.85rem; font-family: var(--font-mono); display: none;">
+                <i class="fa-solid fa-circle-notch fa-spin"></i> Processing...
+            </div>
+            <button onclick="closeResolver()" class="btn btn-secondary" style="padding: 0.5rem 1.5rem;">Close</button>
+            <button id="resolve-start-btn" onclick="runResolver()" class="btn btn-primary" style="padding: 0.5rem 1.5rem; background: var(--green); color: #000; border: none; font-weight: 600;">
+                <i class="fa-solid fa-play"></i> Start Resolver
+            </button>
+            <button id="resolve-update-btn" onclick="refreshDashboard()" class="btn" style="padding: 0.5rem 1.5rem; background: var(--green); color: #000; border: none; font-weight: 600; display: none;">
+                <i class="fa-solid fa-arrows-rotate"></i> Update Dashboard
+            </button>
+        </div>
+    </div>
+</div>
+
+</div>
+
+<script src="script.js"></script>
+<script>
+async function refreshDashboard() {
+    const btn = document.getElementById('resolve-update-btn');
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Updating...';
+    try {
+        const res = await fetch('/api/refresh');
+        const d = await res.json();
+        if (d.error) throw new Error(d.error);
+        
+        // Use the globally available renderDashboard from script.js
+        sessionStorage.setItem('chekreg_dashboard', JSON.stringify(d));
+        if (typeof renderDashboard === 'function') {
+            renderDashboard(d);
+        } else {
+            // fallback if function scope issues
+            location.reload(); 
+        }
+        closeResolver();
+    } catch(err) {
+        alert("Refresh failed: " + err.message);
+        btn.innerHTML = '<i class="fa-solid fa-arrows-rotate"></i> Update Dashboard';
+    }
+}
+
+function openResolver() {
+    const modal = document.getElementById('resolve-modal');
+    modal.style.display = 'flex';
+    document.getElementById('resolve-log').innerHTML = '<span style="color:var(--text-muted);">Click "Start Resolver" to extract missing links and resolve them automatically using the 4-stage pipeline.</span>';
+    document.getElementById('resolve-stats').style.display = 'none';
+    document.getElementById('resolve-update-btn').style.display = 'none';
+    
+    const startBtn = document.getElementById('resolve-start-btn');
+    startBtn.style.display = 'inline-flex';
+    startBtn.disabled = false;
+    startBtn.innerHTML = '<i class="fa-solid fa-play"></i> Start Resolver';
+    
+    document.getElementById('resolve-progress-text').style.display = 'none';
+}
+
+function closeResolver() {
+    document.getElementById('resolve-modal').style.display = 'none';
+}
+
+async function runResolver() {
+    const logEl = document.getElementById('resolve-log');
+    const statsEl = document.getElementById('resolve-stats');
+    const startBtn = document.getElementById('resolve-start-btn');
+    const progText = document.getElementById('resolve-progress-text');
+
+    startBtn.disabled = true;
+    startBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Running...';
+    progText.style.display = 'block';
+    
+    logEl.innerHTML = '> Extracting missing links from scan results...<br>';
+    statsEl.style.display = 'none';
+
+    // Step 1: Export missing orgs
+    try {
+        const missingRes = await fetch('/api/missing', { method: 'POST' });
+        const missingData = await missingRes.json();
+        if (missingData.error) {
+            logEl.innerHTML += `<span style="color:var(--danger);">> ${missingData.error}</span><br>`;
+            startBtn.disabled = false;
+            startBtn.innerHTML = '<i class="fa-solid fa-play"></i> Start Resolver';
+            progText.style.display = 'none';
+            return;
+        }
+        logEl.innerHTML += `> Found ${missingData.count} organizations without deletion links.<br>`;
+        if (missingData.count === 0) {
+            logEl.innerHTML += '<span style="color:var(--green);">> All organizations already have links!</span><br>';
+            startBtn.disabled = false;
+            startBtn.innerHTML = '<i class="fa-solid fa-play"></i> Start Resolver';
+            progText.style.display = 'none';
+            return;
+        }
+    } catch(e) {
+        logEl.innerHTML += `<span style="color:var(--danger);">> Failed to extract missing links: ${e}</span><br>`;
+        startBtn.disabled = false;
+        startBtn.innerHTML = '<i class="fa-solid fa-play"></i> Start Resolver';
+        progText.style.display = 'none';
+        return;
+    }
+
+    // Step 2: Start resolver
+    logEl.innerHTML += '> Starting 4-stage link resolver...<br><br>';
+    try {
+        await fetch('/api/resolve', { method: 'POST' });
+    } catch(e) {
+        logEl.innerHTML += `<span style="color:var(--danger);">> Failed to start resolver: ${e}</span><br>`;
+        startBtn.disabled = false;
+        startBtn.innerHTML = '<i class="fa-solid fa-play"></i> Start Resolver';
+        progText.style.display = 'none';
+        return;
+    }
+
+    // Step 3: Poll for updates
+    let lastLen = 0;
+    const pollInterval = setInterval(async () => {
+        try {
+            const res = await fetch('/api/resolve/status');
+            const data = await res.json();
+
+            // Append new log lines
+            if (data.log && data.log.length > lastLen) {
+                const newLines = data.log.slice(lastLen);
+                newLines.forEach(line => {
+                    let color = 'var(--text-secondary)';
+                    if (line.includes('[DB HIT]')) color = 'var(--green)';
+                    else if (line.includes('[PROBED]')) color = '#52c41a';
+                    else if (line.includes('[SEARCH]') || line.includes('[DELETE]')) color = '#1890ff';
+                    else if (line.includes('[OFFLINE]')) color = 'var(--warning)';
+                    else if (line.includes('[MISS]')) color = 'var(--text-muted)';
+                    else if (line.includes('[!]')) color = 'var(--danger)';
+                    else if (line.includes('[+]')) color = 'var(--green)';
+                    logEl.innerHTML += `<span style="color:${color};">${line}</span><br>`;
+                });
+                lastLen = data.log.length;
+                logEl.scrollTop = logEl.scrollHeight;
+            }
+
+            if (data.status === 'done' || data.status === 'error') {
+                clearInterval(pollInterval);
+                startBtn.style.display = 'none';
+                progText.style.display = 'none';
+                document.getElementById('resolve-update-btn').style.display = 'inline-flex';
+
+                if (data.stats && data.stats.total > 0) {
+                    statsEl.style.display = 'block';
+                    statsEl.innerHTML = `
+                        <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:0.5rem; font-family:var(--font-mono); font-size:0.85rem;">
+                            <div><span style="color:var(--green);">DB Hits:</span> ${data.stats.db_hit || 0}</div>
+                            <div><span style="color:#52c41a;">Probed:</span> ${data.stats.probe_hit || 0}</div>
+                            <div><span style="color:#1890ff;">Search:</span> ${data.stats.search_hit || 0}</div>
+                            <div><span style="color:var(--warning);">Offline:</span> ${data.stats.offline || 0}</div>
+                            <div><span style="color:var(--text-muted);">Not Found:</span> ${data.stats.not_found || 0}</div>
+                            <div><strong style="color:var(--green);">Resolved:</strong> ${data.stats.resolved || 0}/${data.stats.total || 0}</div>
+                        </div>
+                    `;
+                }
+            }
+        } catch(e) { /* retry on next tick */ }
+    }, 500);
+}
+</script>
+</body>
+</html>

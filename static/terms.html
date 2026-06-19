@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChekReg — Terms of Use</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .main-content::-webkit-scrollbar { display: none; }
+        .main-content { scrollbar-width: none; -ms-overflow-style: none; }
+    </style>
+</head>
+<body>
+
+<div class="app-wrapper">
+    <header class="navbar">
+        <div class="brand">
+            <i class="fa-solid fa-terminal brand-icon"></i>
+            <h1>chekreg</h1>
+            <span>terms of use</span>
+        </div>
+        <div id="nav-actions">
+            <button onclick="sessionStorage.removeItem('chekreg_dashboard'); window.location.href='/';" class="btn btn-secondary" title="This will lead you to the input box and clear all session cache from the browser.">
+                <i class="fa-solid fa-arrow-left"></i> Back to Scanner
+            </button>
+        </div>
+    </header>
+
+    <main class="main-content" style="max-width: 800px; margin: 0 auto; padding-top: 2rem; overflow-y: auto; padding-bottom: 2rem;">
+        <div class="panel">
+            <h2 style="color: var(--green); margin-bottom: 1.5rem; font-family: var(--font-mono);">Terms of Use</h2>
+            
+            <div style="color: var(--text); line-height: 1.6; font-size: 0.95rem;">
+                <p style="margin-bottom: 1.5rem;">By using the ChekReg software, you agree to the following terms. Please read them carefully.</p>
+
+                <h3 style="color: #fff; margin-bottom: 0.75rem; font-size: 1.1rem;">1. "As Is" Provision</h3>
+                <p style="margin-bottom: 1.5rem; color: var(--text-muted);">
+                    ChekReg is provided "as is", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement. In no event shall the authors or copyright holders be liable for any claim, damages or other liability, whether in an action of contract, tort or otherwise, arising from, out of or in connection with the software or the use or other dealings in the software.
+                </p>
+
+                <h3 style="color: #fff; margin-bottom: 0.75rem; font-size: 1.1rem;">2. User Responsibility</h3>
+                <p style="margin-bottom: 1.5rem; color: var(--text-muted);">
+                    You are solely responsible for the actions you take using this software. ChekReg maps your digital footprint by analyzing your email metadata and provides links to account deletion and unsubscribe pages. Deleting an account or unsubscribing from a service is a permanent action. You must verify the accounts you are deleting. The developers of ChekReg are not responsible for any accidental deletion of data, loss of access to services, or consequences arising from using the links provided by this tool.
+                </p>
+
+                <h3 style="color: #fff; margin-bottom: 0.75rem; font-size: 1.1rem;">3. Privacy & Data Handling</h3>
+                <p style="margin-bottom: 1.5rem; color: var(--text-muted);">
+                    ChekReg is a local-first application. Your email credentials, connection details, and the contents of your inbox remain on your device and are never transmitted to the developers or any third-party servers. The only exception is if you explicitly opt-in to the Have I Been Pwned (HIBP) integration, in which case domain names (but not your email address or password) are securely queried against the official HIBP API. You are responsible for ensuring that your local environment is secure.
+                </p>
+
+                <h3 style="color: #fff; margin-bottom: 0.75rem; font-size: 1.1rem;">4. Acceptable Use</h3>
+                <p style="margin-bottom: 1.5rem; color: var(--text-muted);">
+                    You agree to use ChekReg only on email accounts that you own or have explicit authorization to audit. Unauthorized access to email accounts belonging to others is strictly prohibited and is your sole legal responsibility.
+                </p>
+            </div>
+        </div>
+    </main>
+</div>
+
+</body>
+</html>
