@@ -1,18 +1,15 @@
 #!/usr/bin/env python3
 """
 chekreg — Digital Footprint Mapper
-Scans your own Gmail to discover and audit every account tied to your email.
+Scans your email via IMAP to discover and audit every account tied to your address.
 
 Usage:
-    python chekreg.py --email you@gmail.com
-    python chekreg.py --email you@gmail.com --full
-    python chekreg.py --email you@gmail.com --export report.json
-    python chekreg.py --email you@gmail.com --txt report.txt
-    python chekreg.py --email you@gmail.com --no-hibp --quiet
-    python chekreg.py --version
+    python chekreg.py          # Interactive menu (choose CLI or Web GUI)
+    python chekreg.py --cli    # Launch Terminal Interface directly
+    python chekreg.py --web    # Launch Web Dashboard directly
 """
 
-import os, re, sys, json, argparse, hashlib, urllib.request, urllib.error, urllib.parse
+import os, re, sys, json, urllib.request, urllib.error, urllib.parse
 from typing import Dict, List, Optional, Set
 from dataclasses import dataclass, field
 from collections import Counter
@@ -44,8 +41,6 @@ def bar(filled, total=20, fill="█", empty="░"):
     n = int((filled / max(total, 1)) * 20)
     return G + fill * n + D + empty * (20 - n) + RS
 
-# ── constants ──────────────────────────────────────────────────────────────────
-SCOPES  = ['https://www.googleapis.com/auth/gmail.readonly']
 VERSION = "3.3"
 
 # ── hardcoded fallback — used when sites.json is missing ───────────────────────
@@ -351,11 +346,10 @@ class Scanner:
         if not self.quiet:
             print(msg)
 
-    # ── auth ──
     def authenticate(self, host: str, port: int, password: str) -> bool:
         self.imap_host = host
         self.imap_port = port
-        self.imap_pass = password
+        self._imap_pass = password
         try:
             self.imap = imaplib.IMAP4_SSL(host, port)
             self.imap.login(self.email, password)
@@ -363,6 +357,14 @@ class Scanner:
         except Exception as e:
             print(f"\n  {R}✗ IMAP Auth error:{RS} {e}\n")
             return False
+
+    def close(self):
+        """Logout of IMAP and zero the in-memory credential."""
+        self._imap_pass = None
+        try:
+            self.imap.logout()
+        except Exception:
+            pass
 
     # ── per-message header processing ──
     def _process_message(self, hdrs):
@@ -412,10 +414,10 @@ class Scanner:
     # ── imap scan ──
     def scan_imap(self, progress_cb=None):
         try:
-            self.imap.select('"[Gmail]/All Mail"')
+            self.imap.select('"[Gmail]/All Mail"', readonly=True)
             folder_name = 'ALL MAIL'
-        except:
-            self.imap.select('INBOX')
+        except Exception:
+            self.imap.select('INBOX', readonly=True)
             folder_name = 'INBOX'
             
         if not self.quiet:
