@@ -120,13 +120,13 @@ DELETION_URLS_FALLBACK = {
 }
 
 # ── load external sites database ───────────────────────────────────────────────
-def load_sites_db() -> dict:
+def load_sites_db(path: str = None) -> tuple:
     """
     Load deletion URLs from the external sites.json file.
     Returns a flat dict of domain → URL.
     Falls back to DELETION_URLS_FALLBACK if the file is missing or invalid.
     """
-    sites_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'sites.json')
+    sites_path = path if path else os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'sites.json')
     if not os.path.exists(sites_path):
         return dict(DELETION_URLS_FALLBACK)
 

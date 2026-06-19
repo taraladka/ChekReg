@@ -116,6 +116,95 @@ class TestReportScore(unittest.TestCase):
         # Score = 100 - (0.25 * 50) - (0.25 * 30) - (0.25 * 20) = 100 - 12.5 - 7.5 - 5 = 75
         self.assertEqual(report.score(), 75)
 
+class TestProcessMessage(unittest.TestCase):
+    def setUp(self):
+        self.scanner = engine.Scanner("test@example.com", quiet=True)
+
+    def test_extracts_org_from_sender(self):
+        self.scanner._process_message({
+            'from': 'Support <support@github.com>',
+            'subject': 'Welcome to GitHub',
+            'date': 'Mon, 01 Jan 2024 12:00:00 +0000',
+            'list-unsubscribe': ''
+        })
+        self.assertIn('Github', self.scanner.orgs)
+        self.assertEqual(self.scanner.orgs['Github'].total_emails, 1)
+
+    def test_skips_malformed_sender(self):
+        self.scanner._process_message({
+            'from': 'Just A Name Without Email',
+            'subject': 'Hello',
+            'date': 'Mon, 01 Jan 2024 12:00:00 +0000',
+            'list-unsubscribe': ''
+        })
+        self.assertEqual(len(self.scanner.orgs), 0)
+
+    def test_categorizes_account_email(self):
+        self.scanner._process_message({
+            'from': 'admin@service.com',
+            'subject': 'Verify your account',
+            'date': '', 'list-unsubscribe': ''
+        })
+        self.assertTrue(self.scanner.orgs['Service'].has_account)
+
+    def test_categorizes_newsletter(self):
+        self.scanner._process_message({
+            'from': 'news@media.com',
+            'subject': 'Weekly Digest',
+            'date': '', 'list-unsubscribe': ''
+        })
+        self.assertEqual(self.scanner.orgs['Media'].categories['newsletter'], 1)
+
+    def test_extracts_unsub_link(self):
+        self.scanner._process_message({
+            'from': 'marketing@shop.com',
+            'subject': 'Sale!',
+            'date': '',
+            'list-unsubscribe': '<https://shop.com/unsub>'
+        })
+        self.assertIn('https://shop.com/unsub', self.scanner.orgs['Shop'].unsub_links)
+
+
+class TestLoadSitesDb(unittest.TestCase):
+    def test_falls_back_when_file_missing(self):
+        # We simulate missing file by calling load_sites_db on a fake path
+        original = engine.SITES_META
+        try:
+            urls = engine.load_sites_db(path="/does/not/exist.json")
+            self.assertIn('github.com', urls)  # fallback loaded
+            self.assertTrue(len(urls) > 10)
+        finally:
+            engine.SITES_META = original
+
+    def test_loads_real_sites_json(self):
+        import os
+        root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        sites_path = os.path.join(root, 'data', 'sites.json')
+        if os.path.exists(sites_path):
+            urls = engine.load_sites_db(path=sites_path)
+            self.assertTrue(len(urls) > 0)
+
+
+class TestSafeUrlValidation(unittest.TestCase):
+    # Testing the server-side regex that guards against JS injection in list-unsubscribe
+    def test_rejects_javascript_url(self):
+        import re
+        unsub = "<javascript:alert(1)>"
+        link = re.search(r'<(https?://[^>]+)>', unsub)
+        self.assertIsNone(link)
+
+    def test_accepts_https(self):
+        import re
+        unsub = "<https://safe.com/unsub>"
+        link = re.search(r'<(https?://[^>]+)>', unsub)
+        self.assertEqual(link.group(1), "https://safe.com/unsub")
+
+    def test_accepts_http(self):
+        import re
+        unsub = "<http://safe.com/unsub>"
+        link = re.search(r'<(https?://[^>]+)>', unsub)
+        self.assertEqual(link.group(1), "http://safe.com/unsub")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "chekreg"
+version = "3.3.0"
+description = "Local digital footprint mapper via IMAP"
+requires-python = ">=3.9"
+dependencies = [
+    "tldextract==5.3.1",
+    "colorama==0.4.6",
+    "Flask==3.1.3",
+    "duckduckgo-search>=6.0.0",
+    "requests==2.34.2",
+]
+
+[project.scripts]
+chekreg = "chekreg:main"
+
+[tool.setuptools]
+py-modules = ["chekreg", "engine", "server"]
